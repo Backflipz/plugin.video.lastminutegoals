@@ -2,6 +2,7 @@ from xbmcswift2 import Plugin
 import os
 import sys
 import xbmc
+sys.path.append (xbmc.translatePath( os.path.join( os.getcwd(), 'resources', 'lib' ) ))
 from bs4 import BeautifulSoup as BS
 import requests
 import re
