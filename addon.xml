@@ -3,6 +3,7 @@
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmcswift2" version="2.4.0"/>
+	<import addon="script.module.html5lib"/>
 	<import addon="script.module.beautifulsoup4"/>
 	<import addon="script.module.requests"/>
   </requires>
