@@ -2,8 +2,7 @@ from xbmcswift2 import Plugin
 import os
 import sys
 import xbmc
-sys.path.append (xbmc.translatePath( os.path.join( os.getcwd(), 'resources', 'lib' ) ))
-from bs4 import BeautifulSoup as BS
+from BeautifulSoup import BeautifulSoup as BS
 import requests
 import re
 plugin = Plugin()
@@ -95,27 +94,78 @@ def transform_page(url):
 	soup = BS(lmg.text)
 	items = []
 	index = 0
-	for link in soup.find_all('article')[0].find_all('a'):
-		item = {}
-		url = link['href']
-		item['label'] = link.string
-		if 'tabs' in url and ('stats' not in str(link.string).lower()):  
-			item['path'] = plugin.url_for('play_page',url = url, index = index)
-			index+=1
+	
+	# for link in soup.findAll('article')[0].findAll('a'):
+		# item = {}
+		# url = link['href']
+		# item['label'] = link.string
+		# plugin.log.info(url)
+		# if 'tabs' in url and ('stats' not in str(link.string).lower()):
+			# page_url = url
+			# break
+	plugin.log.info('TITLE %s' % soup.title)
+	textAppr = 0
+	pz = []
+	for i in soup.findAll('p'):
+		plugin.log.info(i)
+		if len(str(i.script)) > 4: 
+			pz.append(i)
+	plugin.log.info(pz)
+	for link_type in pz:
+		scripts = link_type.findAll('script')
+		for link in scripts:
+			plugin.log.info('LINK TXT %s' % link)
+		
+			# if (link_txt != '') and (link_txt != 'None') and ('meme' not in link_txt):
+				# ne = link.next_element
+				# while 1:
+					# if 'script' in str(ne):
+						# break
+					# ne = ne.next_element
+				# plugin.log.info('NE %s' % str(ne))
+				# try:
+					# try: pc = playwire_config('http:' + ne['data-config'])
+					# except: pc = playwire_config(ne['data-config'])
+				# except: pc = playwire_config(ne.script['data-config'])
+				# plugin.log.info(pc)
+				# item = {'label': link_txt + ' (%s)' % pc['duration'], 
+				# 'path': pc['url'],
+				# 'info' : {'title':soup.title.string},
+				# 'thumbnail': pc['thumbnail'],
+				# 'is_playable': True}
+				# items.append(item)
+				# textAppr = 1
+			
+			try: pc = playwire_config('http:' + link['data-config'])
+			except: 
+				try: pc = playwire_config(link['data-config'])
+				except: 
+					try: pc = playwire_config(link.script['data-config'])
+					except: pc = playwire_config('http:' + link.script['data-config'])
+			plugin.log.info(pc)
+			item = {'label': pc['title'] + ' (%s)' % pc['duration'], 
+			'path': pc['url'],
+			'info' : {'title':soup.title.string},
+			'thumbnail': pc['thumbnail'],
+			'is_playable': True}
 			items.append(item)
 	return items
 	
-@plugin.route('/play_page/<index>/<url>/')
-def play_page(url,index):
-	from bs4 import NavigableString,Tag
-	lmg = requests.get(url)
-	soup = BS(lmg.text)
-	items = []
-	plugin.log.info('TITLE %s' % soup.title)
-	textAppr = 0
-	for link in soup.find_all('p')[int(index)]:
-		link_txt = str(link.string).replace('\n','').replace('\r','')
-		plugin.log.info('LINK TXT %s' % link.string)
+# @plugin.route('/play_page/<index>/<url>/')
+# def play_page(url,index):
+	# from bs4 import NavigableString,Tag
+	# lmg = requests.get(url)
+	# soup = BS(lmg.text)
+	# items = []
+	# plugin.log.info('TITLE %s' % soup.title)
+	# textAppr = 0
+	# pz = []
+	# for i in soup.findAll('p'):
+		# if len(str(i.script)) > 4: 
+			# pz.append(i)
+	# plugin.log.info(pz)
+	# for link in pz[int(index)]:
+		# plugin.log.info('LINK TXT %s' % link.string)
 		# if (link_txt != '') and (link_txt != 'None') and ('meme' not in link_txt):
 			# ne = link.next_element
 			# while 1:
@@ -135,20 +185,19 @@ def play_page(url,index):
 			# 'is_playable': True}
 			# items.append(item)
 			# textAppr = 1
-		if isinstance(link,Tag):
-			try:
-				try: pc = playwire_config('http:' + link['data-config'])
-				except: pc = playwire_config(link['data-config'])
-				plugin.log.info(pc)
-				item = {'label': pc['title'] + ' (%s)' % pc['duration'], 
-				'path': pc['url'],
-				'info' : {'title':soup.title.string},
-				'thumbnail': pc['thumbnail'],
-				'is_playable': True}
-				items.append(item)
-			except:pass
+		# if isinstance(link,Tag) and ('meme' not in str(link)):
+			# try: pc = playwire_config('http:' + link['data-config'])
+			# except: pc = playwire_config(link['data-config'])
+			# plugin.log.info(pc)
+			# item = {'label': pc['title'] + ' (%s)' % pc['duration'], 
+			# 'path': pc['url'],
+			# 'info' : {'title':soup.title.string},
+			# 'thumbnail': pc['thumbnail'],
+			# 'is_playable': True}
+			# items.append(item)
+		
 			
-	return items
+	# return items
 
 			
 def playwire_config(url):
@@ -179,9 +228,9 @@ def search(search_term = '',page = '1'):
 	lmg = requests.get(url)
 	soup = BS(lmg.text)
 	items = []
-	for link in soup.find_all('article'):
+	for link in soup.findAll('article'):
 		l_url = link.a['href']
-		title = link.a.img['alt'] + ' (%s)' % l_url[31:41]
+		title = link.a['title'].replace('Permalink to ','') + ' (%s)' % l_url[31:41]
 		img = 'http://' + link.a.img['src'][2:]
 		img = img.replace('-110x110','')
 		item = {'label': title, 'thumbnail' : img, 'path':plugin.url_for('transform_page',url = l_url)}
@@ -196,7 +245,7 @@ def cats(cat = '', page = '1'):
 	lmg = requests.get(url)
 	soup = BS(lmg.text)
 	items = []
-	for link in soup.find_all('article'):
+	for link in soup.findAll('article'):
 		l_url = link.a['href']
 		title = link.a.img['alt'] + ' (%s)' % l_url[31:41]
 		img = 'http://' + link.a.img['src'][2:]
